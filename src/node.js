@@ -46,14 +46,13 @@ process.evalcx = function () {
 var nextTickQueue = [];
 
 process._tickCallback = function () {
-  for (var l = nextTickQueue.length; l; l--) {
+  while (nextTickQueue.length) {
     nextTickQueue.shift()();
   }
 };
 
 process.nextTick = function (callback) {
   nextTickQueue.push(callback);
-  process._needTickCallback();
 };
 
 // Module System
