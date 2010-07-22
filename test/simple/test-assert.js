@@ -111,6 +111,57 @@ assert.throws(makeBlock(a.deepEqual, nb1, nb2), a.AssertionError);
 // String literal + object blew up my implementation...
 assert.throws(makeBlock(a.deepEqual, 'a', {}), a.AssertionError);
 
+// Cyclic reference
+var testA = { };
+var testB = { foo: testA };
+testA.bar = testB;
+
+var testC = { };
+var testD = { bar: testC };
+testC.foo = testD;
+
+assert.doesNotThrow(makeBlock(a.deepEqual, testA, testA), a.AssertionError);
+assert.doesNotThrow(makeBlock(a.deepEqual, testA, testD), a.AssertionError);
+assert.doesNotThrow(makeBlock(a.deepEqual, testD, testA), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testA, testC), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testB, testD), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testC, testA), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testD, testB), a.AssertionError);
+
+var source, dest;
+testA = [ [ 1 ], [ 2 ], [ 3 ] ];
+testB = [ [ 1 ], [ 2 ], [ 3 ] ];
+testC = [ [ 1 ], [ 2 ], [ 3 ] ];
+
+for (dest = 2; dest >= 0; dest--) {
+  for (source = 2; source >= 0; source--) {
+    testA[dest].push(testA[source]);
+  }
+}
+
+for (dest = 2; dest >= 0; dest--) {
+  for (source = 2; source >= 0; source--) {
+    testB[dest].push(testB[source]);
+  }
+}
+
+// testC has different ordering
+for (dest = 2; dest >= 0; dest--) {
+  for (source = 0; source < 3; source++) {
+    testC[dest].push(testC[source]);
+  }
+}
+
+assert.doesNotThrow(makeBlock(a.deepEqual, testA, testA), a.AssertionError);
+assert.doesNotThrow(makeBlock(a.deepEqual, testA, testB), a.AssertionError);
+assert.doesNotThrow(makeBlock(a.deepEqual, testB, testA), a.AssertionError);
+assert.doesNotThrow(makeBlock(a.deepEqual, testB, testB), a.AssertionError);
+assert.doesNotThrow(makeBlock(a.deepEqual, testC, testC), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testA, testC), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testB, testC), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testC, testA), a.AssertionError);
+assert.throws(makeBlock(a.deepEqual, testC, testB), a.AssertionError);
+
 // Testing the throwing
 function thrower (errorConstructor){
   throw new errorConstructor('test');
